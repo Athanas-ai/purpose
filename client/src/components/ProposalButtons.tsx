@@ -10,8 +10,11 @@ interface ProposalButtonsProps {
 export function ProposalButtons({ onResponse }: ProposalButtonsProps) {
   const [noButtonPosition, setNoButtonPosition] = useState({ x: 0, y: 0 });
   const [attempts, setAttempts] = useState(0);
+  const [maxReached, setMaxReached] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const createResponse = useCreateResponse();
+
+  const MAX_ATTEMPTS = 20;
 
   const handleYesClick = () => {
     // Trigger confetti
@@ -49,21 +52,24 @@ export function ProposalButtons({ onResponse }: ProposalButtonsProps) {
 
   const moveNoButton = () => {
     if (!containerRef.current) return;
-    
-    const containerRect = containerRef.current.getBoundingClientRect();
-    const buttonWidth = 120; // Approx width
-    const buttonHeight = 50; // Approx height
-    
-    // Calculate safe area (screen bounds minus padding)
-    // Using fixed values to ensure it stays somewhat central but erratic
-    const maxMoveX = Math.min(window.innerWidth / 2 - buttonWidth, 150);
-    const maxMoveY = Math.min(window.innerHeight / 3 - buttonHeight, 200);
-
-    const newX = (Math.random() - 0.5) * 2 * maxMoveX;
-    const newY = (Math.random() - 0.5) * 2 * maxMoveY;
-
-    setNoButtonPosition({ x: newX, y: newY });
-    setAttempts(prev => prev + 1);
+    // If we've already reached the max attempts, don't move anymore
+    setAttempts(prev => {
+      const next = prev + 1;
+      if (next >= MAX_ATTEMPTS) {
+        // center the button and mark max reached so it stops evading
+        setNoButtonPosition({ x: 0, y: 0 });
+        setMaxReached(true);
+      } else {
+        const buttonWidth = 120; // Approx width
+        const buttonHeight = 50; // Approx height
+        const maxMoveX = Math.min(window.innerWidth / 2 - buttonWidth, 150);
+        const maxMoveY = Math.min(window.innerHeight / 3 - buttonHeight, 200);
+        const newX = (Math.random() - 0.5) * 2 * maxMoveX;
+        const newY = (Math.random() - 0.5) * 2 * maxMoveY;
+        setNoButtonPosition({ x: newX, y: newY });
+      }
+      return next;
+    });
   };
 
   const handleNoClick = () => {
@@ -74,9 +80,9 @@ export function ProposalButtons({ onResponse }: ProposalButtonsProps) {
 
   // Messages based on attempts
   const getNervousText = () => {
-    if (attempts >= 27) return "Maybe this is a sign.";
-    if (attempts >= 15) return "It really does not want to be pressed.";
-    if (attempts >= 7) return "That button seems nervous.";
+    if (attempts >= 8) return "Maybe this is a sign.";
+    if (attempts >= 5) return "It really does not want to be pressed.";
+    if (attempts >= 2) return "That button seems nervous.";
     return null;
   };
 
@@ -111,28 +117,39 @@ export function ProposalButtons({ onResponse }: ProposalButtonsProps) {
               hover:bg-white/5 hover:text-white hover:border-white/40
               transition-colors duration-200
             "
-            onMouseEnter={moveNoButton}
-            onTouchStart={moveNoButton}
+            onMouseEnter={() => { if (!maxReached) moveNoButton(); }}
+            onTouchStart={() => { if (!maxReached) moveNoButton(); }}
             onClick={handleNoClick}
           >
             No
           </button>
         </motion.div>
       </div>
-
-      {/* Nervous Text */}
+      {/* Nervous / Final Prompt Text */}
       <div className="h-8 mt-8 text-center">
         <AnimatePresence mode="wait">
-          {getNervousText() && (
+          {maxReached ? (
             <motion.p
-              key={attempts >= 17 ? "sign" : attempts >= 15 ? "really" : "nervous"}
+              key="confirm"
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
-              className="text-sm text-white/40 font-light tracking-widest uppercase"
+              className="text-sm text-white/60 font-medium tracking-widest"
             >
-              {getNervousText()}
+              Are you sure? Please click Yes if you want to proceed with No.😒
             </motion.p>
+          ) : (
+            getNervousText() && (
+              <motion.p
+                key={attempts >= 8 ? "sign" : attempts >= 5 ? "really" : "nervous"}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="text-sm text-white/40 font-light tracking-widest uppercase"
+              >
+                {getNervousText()}
+              </motion.p>
+            )
           )}
         </AnimatePresence>
       </div>
