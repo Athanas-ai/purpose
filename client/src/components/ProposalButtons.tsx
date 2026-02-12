@@ -74,9 +74,9 @@ export function ProposalButtons({ onResponse }: ProposalButtonsProps) {
 
   // Messages based on attempts
   const getNervousText = () => {
-    if (attempts >= 8) return "Maybe this is a sign.";
-    if (attempts >= 5) return "It really does not want to be pressed.";
-    if (attempts >= 2) return "That button seems nervous.";
+    if (attempts >= 27) return "Maybe this is a sign.";
+    if (attempts >= 15) return "It really does not want to be pressed.";
+    if (attempts >= 7) return "That button seems nervous.";
     return null;
   };
 
@@ -125,7 +125,7 @@ export function ProposalButtons({ onResponse }: ProposalButtonsProps) {
         <AnimatePresence mode="wait">
           {getNervousText() && (
             <motion.p
-              key={attempts >= 8 ? "sign" : attempts >= 5 ? "really" : "nervous"}
+              key={attempts >= 17 ? "sign" : attempts >= 15 ? "really" : "nervous"}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
