@@ -11,6 +11,7 @@ export function ProposalButtons({ onResponse }: ProposalButtonsProps) {
   const [noButtonPosition, setNoButtonPosition] = useState({ x: 0, y: 0 });
   const [attempts, setAttempts] = useState(0);
   const [maxReached, setMaxReached] = useState(false);
+  const [noMessage, setNoMessage] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const createResponse = useCreateResponse();
 
@@ -73,10 +74,25 @@ export function ProposalButtons({ onResponse }: ProposalButtonsProps) {
   };
 
   const handleNoClick = () => {
-    // In case they manage to click it (e.g. keyboard nav or very fast tap)
+    // If max not reached yet, show playful message and increment attempts
+    if (!maxReached) {
+      setNoMessage("Not yet — try again!");
+      setAttempts(prev => prev + 1);
+      return;
+    }
+
+    // If max reached, record the NO response and give feedback
     createResponse.mutate({ answer: "NO", attempts: attempts + 1 });
+    setNoMessage("Response recorded: NO");
     onResponse("NO");
   };
+
+  // auto-clear noMessage after a short delay
+  useEffect(() => {
+    if (!noMessage) return;
+    const t = setTimeout(() => setNoMessage(null), 2500);
+    return () => clearTimeout(t);
+  }, [noMessage]);
 
   // Messages based on attempts
   const getNervousText = () => {
